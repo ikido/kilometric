@@ -1,29 +1,24 @@
 # Kilometric
 
-TODO: Write a gem description
+Simple, modular redis/ruby-based event tracking heavily inspired by _Fnordmetric_.
 
-## Installation
+Roadmap to version 0.1:
 
-Add this line to your application's Gemfile:
+- API that adds events to Redis Queue, with event key, timestamp and value
 
-    gem 'kilometric'
+- DSL that allows simple definition of events and gauges, similar to _Fnordmetric_. Two types of gauges will be supported in the beginning: _incr_ and _set_value_
 
-And then execute:
+- Worker that processes events, it should be possible to do the following:
+ - process next event in the queue
+ - start/stop a loop to wait for incoming events (via redis.blopop) and process them
+ - rake that starts/stops background worker, which waits for incoming events and processes them
 
-    $ bundle
+Possible future features:
 
-Or install it yourself as:
+- When given a name of gauge (or several gauge names, as array) and optionall y a start and end date it should return a hash sorted by tick time, where tick timestamp is a key, and gauge value is a value.
 
-    $ gem install kilometric
+- Eventmachine/Cellulose-based Web API to recieve events by HTTP as JSON, and return gauge values also as JSON by HTTP.
 
-## Usage
+- Sinatra app that will show available stats in a nice UI
 
-TODO: Write usage instructions here
-
-## Contributing
-
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+- Rails integration gem, that uses ActiveRecord and MySQL/Postgres to store/retrieve data
