@@ -5,7 +5,7 @@ require 'kilometric/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "kilometric"
-  spec.version       = Kilometric::VERSION
+  spec.version       = KiloMetric::VERSION
   spec.authors       = ["Alexander Ponomarev"]
   spec.email         = ["ikidoit@gmail.com"]
   spec.description   = %q{Event tracking for Ruby}
@@ -20,6 +20,8 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "redis"
   spec.add_dependency "json"
+  spec.add_dependency "activesupport"
+  spec.add_dependency "dante"
 
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"

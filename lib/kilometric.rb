@@ -1,7 +1,7 @@
+module KiloMetric
+end
+
 require "kilometric/version"
 require "kilometric/api"
 require "kilometric/worker"
-
-module Kilometric
-
-end
+require "active_support/core_ext"

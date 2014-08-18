@@ -1,24 +1,36 @@
-# Kilometric
+# KiloMetric
 
 Simple, modular redis/ruby-based event tracking heavily inspired by _Fnordmetric_.
 
 Roadmap to version 0.1:
 
-- ~~API that adds events to Redis Queue, with event key, timestamp and value~~
+- ~~API method that adds events to Redis Queue, with event key, timestamp and value~~
 
-- DSL that allows simple definition of events and gauges, similar to _Fnordmetric_. Two types of gauges will be supported in the beginning: _incr_ and _set_value_
+- Background worker that processes events, it should wait for incoming events and process them. It should be possible to start/stop worker from command line, as well as from ruby code. Worker should read DSL-based ruby script in current folder for configuration
 
-- Worker that processes events, it should be possible to do the following:
- - process next event in the queue
- - start/stop a loop to wait for incoming events (via redis.blopop) and process them
- - rake that starts/stops background worker, which waits for incoming events and processes them
+- API method that when given a name of gauge (or several gauge names, as array) and optionally a start and end date it should return a hash sorted by tick time, where tick timestamp is a key, and gauge value is a value.
+
+- Multithreaded background worker with Celluloid or EventMachine
 
 Possible future features:
 
-- When given a name of gauge (or several gauge names, as array) and optionall y a start and end date it should return a hash sorted by tick time, where tick timestamp is a key, and gauge value is a value.
+- Eventmachine/Celluloid-based Web API to recieve events by HTTP as JSON, and return gauge values also as JSON by HTTP.
 
-- Eventmachine/Cellulose-based Web API to recieve events by HTTP as JSON, and return gauge values also as JSON by HTTP.
-
-- Sinatra app that will show available stats in a nice UI
+- Sinatra app that will show available stats in a nice UI, with d3.js-based charts and graphs
 
 - Rails integration gem, that uses ActiveRecord and MySQL/Postgres to store/retrieve data
+
+---
+
+Worker specs
+
+- when started, it starts infinite loop to process events
+- should be possible to start in background
+- when you close one, it should catch an exception, finish processing current event and then exit
+- later on, it should start running in a background with a bin command, write pid somewhere on the system,
+  and the close itself when bin is started with close command, like:
+
+  kilometric start
+  kilometric stop
+
+- after that we should employ multithreading, so that processing of reach event happens on a separate thread
