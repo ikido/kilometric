@@ -6,11 +6,11 @@ Roadmap to version 0.1:
 
 - ~~API method that adds events to Redis Queue, with event key, timestamp and value~~
 
-- Background worker that processes events, it should wait for incoming events and process them. It should be possible to start/stop worker from command line, as well as from ruby code. Worker should read DSL-based ruby script in current folder for configuration
+- Background worker that processes events, it should wait for incoming events and process them. It should be possible to start/stop worker from command line, as well as from ruby code. Dispatcher should read DSL-based ruby script in current folder for configuration
 
 - API method that when given a name of gauge (or several gauge names, as array) and optionally a start and end date it should return a hash sorted by tick time, where tick timestamp is a key, and gauge value is a value.
 
-- Multithreaded background worker with Celluloid or EventMachine
+- Multiple concurrent workers with Celluloid, processing events
 
 Possible future features:
 
@@ -34,3 +34,13 @@ Worker specs
   kilometric stop
 
 - after that we should employ multithreading, so that processing of reach event happens on a separate thread
+
+TODO:
+
+- Add method_missing to catch non-existent DSL verbs
+- Add current timestamp if no _type option was passed to KiloMetric::API#event
+- Allow to fetch data from multiple gauges with KiloMetric::API#fetch_gauge_values
+
+Requirements:
+
+- Ruby 1.9.3, due to Celluloid it is preferred to use Rubini.us or Jruby interpreters instead of vanilla MRI/ 

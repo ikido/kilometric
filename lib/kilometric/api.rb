@@ -53,17 +53,17 @@ module KiloMetric
 
       # namespace symbolic name — string or symbol, wil be used also as a prefix
       # for namespace-specific reids keys
-      namespace: :default,
+      namespace: KiloMetric::DEFAULTS.namespace,
 
       # redis url to connect to
-      redis_url: "redis://localhost:6379",
+      redis_url: KiloMetric::DEFAULTS.redis_url,
 
       # event will be deleted and lost if not processed within
       # this number of seconds
-      event_queue_ttl: 120,
+      event_queue_ttl: KiloMetric::DEFAULTS.event_queue_ttl,
 
       # event data will be deleted after this number of seconds expire
-      event_data_ttl: 3600*24*30
+      event_data_ttl: KiloMetric::DEFAULTS.event_data_ttl
     )
 
     # connects to Redis and sets respective instance variable
