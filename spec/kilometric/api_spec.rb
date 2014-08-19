@@ -2,48 +2,81 @@ require ::File.expand_path('../../spec_helper.rb', __FILE__)
 
 describe KiloMetric::API do
 
-  before(:all) do
-    @now = Time.utc(1992,01,13,5,23,23).to_i
-    @redis = Redis.new
-
-    @opts = {
-      :namespace => :test,
-      :redis => @redis
-    }
-
-    @api = KiloMetric::API.new @opts
+  before do
+    @file = File.read(::File.expand_path('../../fixtures/config.rb', __FILE__))
+    @config = double
+    allow(@config).to receive(:connect)
   end
 
   describe "initialize" do
 
-    it "should properly init default options and override them with new options" do
-      @api.options.redis.should == @redis
-      @api.options.namespace.should == :test
-      @api.options.redis_url.should == 'redis://localhost:6379'
-      @api.options.event_queue_ttl.should == 120
-      @api.options.event_data_ttl.should == 2592000
+    it "should load default config if no options passed" do
+      api = KiloMetric::API.new
+
+      KiloMetric::DEFAULTS.each do |key, value|
+        expect(api.config.send(key)).to eq(value)
+      end
+
+      expect(api.config.gauges).to eq([])
+      expect(api.config.events).to eq([])
+    end
+
+    it "should load config from file and override values" do
+      api = KiloMetric::API.new(@file)
+
+      expect(api.config.namespace).to eq(:test)
+      expect(api.config.redis_url).to eq('redis://localhost:6379')
+
+      expect(api.config.gauges.first[:name]).to eq(:properties_live)
+      expect(api.config.gauges.first[:tick]).to eq(86400)
+
+      expect(api.config.gauges.second[:name]).to eq(:properties_added)
+      expect(api.config.gauges.second[:tick]).to eq(2592000)
+
+      expect(api.config.events.first[:name]).to eq(:set_total_properties_live)
+      expect(api.config.events.first[:block].kind_of?(Proc)).to eq(true)
+
+      expect(api.config.events.second[:name]).to eq(:property_added)
+      expect(api.config.events.second[:block].kind_of?(Proc)).to eq(true)
+    end
+
+    it "should load config from block and override values" do
+      url = 'redis://localhost:6380'
+
+      api = KiloMetric::API.new do
+        redis_url url
+      end
+
+      expect(api.config.redis_url).to eq(url)
+    end
+
+    it "should connect to redis" do
+      expect(Redis).to receive(:new)
+      api = KiloMetric::API.new
     end
 
   end
 
-  describe "track_event" do
-
-    before(:each) do
-      @redis.keys("#{@api.redis_prefix}-*").each { |k| @redis.del(k) }
+  describe "config" do
+    it "should return instance of KiloMetric::Config" do
+      expect(KiloMetric::Config).to receive(:new).and_return(@config)
+      api = KiloMetric::API.new
+      api.config
     end
+  end
 
-    it "should create an event from a hash" do
-      event_id = @api.track_event(
-        :_type => "kil0234",
-        :_time => @now
-      )
+  describe "track" do
 
-      event = @api.fetch_event_data(event_id)
-      expect(event['_type']).to eq("kil0234")
+    it "should delegate method to KiloMetric::EventManager#track" do
+      event_manager = double
+
+      allow(KiloMetric::EventManager).to receive(:new).and_return(event_manager)
+      api = KiloMetric::API.new
+      args = { foo: 'bar' }
+      event_id = 123456
+      expect(event_manager).to receive(:track).with(args).and_return(event_id)
+      expect(api.track(args)).to eq(event_id)
     end
-
-    it "should add current timestamp if no _time option was passed"
-
 
   end
 

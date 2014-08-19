@@ -1,6 +1,8 @@
 # namespace name, to prefix keys in redis
 namespace :test
-redis_url "redis://localhost:6380"
+redis_url "redis://localhost:6379"
+event_queue_ttl 3600*24
+event_data_ttl 3600*24
 
 # gauge name and iterval
 gauge :properties_live, tick: 1.day

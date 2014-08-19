@@ -1,44 +1,40 @@
 module KiloMetric
   class Config
 
-    class << self
+    # Note: anyone can write config options! this is probably not very good
+    attr_accessor :gauges, :events
 
-      # TODO: move defaults somewhere
-      def parse(config_dsl)
+    # enable accessors for attributes that have defaults
+    KiloMetric::DEFAULTS.each do |key, value|
+      attr_accessor key.to_sym
+    end
 
-        @@config = OpenStruct.new(
-          redis_url: KiloMetric::DEFAULTS.redis_url, # redis url to connect to
-          namespace: KiloMetric::DEFAULTS.namespace,
-          gauges: [],
-          events: []
-        )
+    def initialize(options = {})
+      self.gauges = []
+      self.events = []
 
-        self.class_eval(config_dsl)
-        return @@config
+      # load defauts and override them with passed options
+      KiloMetric::DEFAULTS.each do |key, value|
+        value = options[key] unless options[key].blank?
+        send "#{key}=", value
       end
+    end
 
+    # connects to Redis and sets respective instance variable
+    def connect
+      @connection ||= Redis.connect(url: redis_url)
+    end
 
-    # Private class methods invoked by DSL
-    private
+    def redis_prefix
+      "kilometric-#{@namespace}"
+    end
 
-      # TODO: Add method_missing to catch non-existent DSL verbs
+    def disconnect
+      connection.quit
+    end
 
-      def redis_url(value)
-        @@config.redis_url = value
-      end
-
-      def namespace(value)
-        @@config.namespace = value
-      end
-
-      def gauge(name, options={})
-        @@config.gauges.push OpenStruct.new(name: name, tick: options[:tick].to_i)
-      end
-
-      def event(name, &block)
-        @@config.events.push OpenStruct.new(name: name, block: block)
-      end
-
+    def connection
+      @connection || connect
     end
 
   end

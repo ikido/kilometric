@@ -4,20 +4,48 @@
 # a rails controller that returns json to a web client or in eventmachine loop that
 # accepts incoming tcp connections with events
 #
-# Usage: @api = KiloMetric::API.new(namespace: :some_name, redis_url: "redis://localhost:6379")
-#        @api.track_event(_type: "kil0234", _time: Time.now)
-#        @api.fetch_gauge_values(gauge: :properties_live, from: 1.week.ago, to: Time.now)
+# Usage: @api = KiloMetric::API.new do
+#   namespace: :some_name
+#   redis_url: "redis://localhost:6379"
+# end
+#
+# @api.track(_type: "kil0234", _time: Time.now)
+# @api.fetch(gauges: [:properties_live], from: 1.week.ago, to: Time.now)
+# @api.start_worker
+# @api.stop_worker
+#
+# TODO: @api.workoff, process all events currently in the queue and ext
 #
 module KiloMetric
   class API
 
-    attr_reader :options
+    attr_reader :config
+
+    # intialize api, merge passed options with defaults
+    # and connect to Redis, if neede
+    def initialize(config_dsl = nil, &block)
+      @config = KiloMetric::Config.new
+
+      # load config from passed file or block
+      if config_dsl or block_given?
+        dsl = KiloMetric::DSL.new(@config)
+
+        if config_dsl
+          dsl.load(config_dsl)
+        elsif block_given?
+          dsl.load(&block)
+        end
+      end
+
+      @config.connect
+      @event_manager = KiloMetric::EventManager.new(@config)
+    end
+
 
     # track an event, we expect hash of event attributes
     # TODO: add current timestamp if no _type option was passed
-    def track_event(event_data)
-      event_data = event_data.to_json
-      push_event(event_data)
+    def track(event_data)
+      @event_manager.track(event_data)
     end
 
     # retrieve values for a gauge within given period
@@ -28,86 +56,18 @@ module KiloMetric
     #
     # TODO: allow to fetch data from multiple gauges
     #
-    def fetch_gauge_values(options={})
+    def fetch(options={})
+      @event_manager.fetch(options)
     end
 
-    # for testing purposes, generate redis prefix for all data pushed by KiloMetric,
-    # based on namespace name
-    def redis_prefix
-      "kilometric-#{@options.namespace}"
+    def workoff
     end
 
-    # for testing purposes, fetches raw event data from redis
-    def fetch_event_data(event_id)
-      redis_key = [redis_prefix, :event, event_id].join("-")
-      json = @redis.get(redis_key) || "{}"
-      JSON.parse(json)
-    end
+    # def start_worker
+    # end
 
-  private
-
-    # default options, that can be overriden on initialization
-    DEFAULT_OPTIONS = OpenStruct.new(
-      # redis connection instance, if nil then try to connect to redis url
-      redis: nil,
-
-      # namespace symbolic name — string or symbol, wil be used also as a prefix
-      # for namespace-specific reids keys
-      namespace: KiloMetric::DEFAULTS.namespace,
-
-      # redis url to connect to
-      redis_url: KiloMetric::DEFAULTS.redis_url,
-
-      # event will be deleted and lost if not processed within
-      # this number of seconds
-      event_queue_ttl: KiloMetric::DEFAULTS.event_queue_ttl,
-
-      # event data will be deleted after this number of seconds expire
-      event_data_ttl: KiloMetric::DEFAULTS.event_data_ttl
-    )
-
-    # connects to Redis and sets respective instance variable
-    def connect
-      @redis = Redis.connect(:url => @options.redis_url)
-    end
-
-    def disconnect
-      @redis.quit
-    end
-
-    # intialize api, merge passed options with defaults
-    # and connect to Redis, if neede
-    def initialize(options={})
-      @options = DEFAULT_OPTIONS
-      options.each do |key, value|
-        @options.send("#{key}=", value) unless value.blank?
-      end
-
-      @redis = @options.redis
-
-      connect unless @redis
-    end
-
-    # generate random event id
-    def get_next_uuid
-      rand(8**32).to_s(36)
-    end
-
-    # generate redis key for event data, based on event id and redis prefix
-    def event_data_redis_key(event_id)
-      "#{redis_prefix}-event-#{event_id}"
-    end
-
-    # actual method that adds event to redis, as well
-    # as adding it to queue. It also sets ttl for an event
-    def push_event(event_data)
-      event_id = get_next_uuid
-      @redis.hincrby "#{redis_prefix}-stats",             "events_received", 1
-      @redis.set     event_data_redis_key(event_id), event_data
-      @redis.lpush   "#{redis_prefix}-queue",             event_id
-      @redis.expire  "#{redis_prefix}-event-#{event_id}", @options.event_queue_ttl
-      event_id
-    end
+    # def stop_worker
+    # end
 
   end
 end
