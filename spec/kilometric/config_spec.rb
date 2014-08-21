@@ -3,16 +3,17 @@ require ::File.expand_path('../../spec_helper.rb', __FILE__)
 describe KiloMetric::Config do
 
   before do
-    @config = KiloMetric::Config.new(namespace: :test)
+    @config = KiloMetric::Config.new do
+      namespace :test
+    end
   end
 
   describe "new" do
 
-    it "should provide read/write accessor for each defalult config value" do
+    it "should provide read accessor for each defalult config value" do
       config = KiloMetric::Config.new
       KiloMetric::DEFAULTS.each do |key, value|
         expect(config.send(key)).to eq(value)
-        expect(config.respond_to?("#{key}=")).to eq(true)
       end
 
       expect(config.gauges).to eq([])

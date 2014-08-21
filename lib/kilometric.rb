@@ -8,11 +8,10 @@ module KiloMetric
 
 end
 
-require "kilometric/version"
-require "kilometric/defaults"
+require "active_support/core_ext"
 require "kilometric/api"
-require "kilometric/dsl"
+require "kilometric/defaults"
+require "kilometric/config"
 require "kilometric/event_manager"
 require "kilometric/worker"
-require "kilometric/config"
-require "active_support/core_ext"
+require "kilometric/version"

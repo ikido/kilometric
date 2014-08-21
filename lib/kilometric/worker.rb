@@ -13,7 +13,6 @@ module KiloMetric
     attr_reader :config
     trap_exit :handle_worker_exit
 
-
     def start
       @processor = KiloMetric::Processor.new_link(@config)
       @processor.start!

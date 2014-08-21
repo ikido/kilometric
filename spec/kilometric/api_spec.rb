@@ -4,8 +4,7 @@ describe KiloMetric::API do
 
   before do
     @file = File.read(::File.expand_path('../../fixtures/config.rb', __FILE__))
-    @config = double
-    allow(@config).to receive(:connect)
+    @config = KiloMetric::Config.new
   end
 
   describe "initialize" do
@@ -50,11 +49,6 @@ describe KiloMetric::API do
       expect(api.config.redis_url).to eq(url)
     end
 
-    it "should connect to redis" do
-      expect(Redis).to receive(:new)
-      api = KiloMetric::API.new
-    end
-
   end
 
   describe "config" do
@@ -69,6 +63,7 @@ describe KiloMetric::API do
 
     it "should delegate method to KiloMetric::EventManager#track" do
       event_manager = double
+      allow(event_manager).to receive(:connection)
 
       allow(KiloMetric::EventManager).to receive(:new).and_return(event_manager)
       api = KiloMetric::API.new

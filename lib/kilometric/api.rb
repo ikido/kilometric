@@ -24,20 +24,17 @@ module KiloMetric
     # intialize api, merge passed options with defaults
     # and connect to Redis, if neede
     def initialize(config_dsl = nil, &block)
-      @config = KiloMetric::Config.new
 
-      # load config from passed file or block
-      if config_dsl or block_given?
-        dsl = KiloMetric::DSL.new(@config)
-
-        if config_dsl
-          dsl.load(config_dsl)
-        elsif block_given?
-          dsl.load(&block)
-        end
+      # create config instance from passed file or block
+      @config = if block_given?
+        KiloMetric::Config.new(&block)
+      else
+        KiloMetric::Config.new(config_dsl)
       end
 
+      # connect to redis
       @config.connect
+
       @event_manager = KiloMetric::EventManager.new(@config)
     end
 

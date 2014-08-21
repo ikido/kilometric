@@ -4,7 +4,7 @@ redis_url "redis://localhost:6379"
 event_queue_ttl 3600*24
 event_data_ttl 3600*24
 
-# gauge name and iterval
+# # gauge name and iterval
 gauge :properties_live, tick: 1.day
 
 gauge :properties_added, tick: 1.month

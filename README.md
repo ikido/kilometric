@@ -38,7 +38,6 @@ Worker specs
 TODO:
 
 - EventManager, Worker and their specs
-- Add method_missing to catch non-existent DSL verbs
 - Add current timestamp if no _type option was passed to KiloMetric::API#event
 - Allow to fetch data from multiple gauges with KiloMetric::API#fetch_gauge_values
 - Use BRPOPLPUSH instead of BLPOP for more durable message processing in KiloMetric::Worker, e.g. not to loose events
